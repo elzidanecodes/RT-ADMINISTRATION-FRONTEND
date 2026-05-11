@@ -2,12 +2,177 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  margin: 0;
-  font-family: system-ui, -apple-system, sans-serif;
-  background-color: #f9fafb;
+/* ─── Light theme (default) ─── */
+:root {
+  --color-background:                248 249 255;
+  --color-surface:                   248 249 255;
+  --color-surface-dim:               203 219 245;
+  --color-surface-bright:            248 249 255;
+  --color-surface-container-lowest:  255 255 255;
+  --color-surface-container-low:     239 244 255;
+  --color-surface-container:         229 238 255;
+  --color-surface-container-high:    220 233 255;
+  --color-surface-container-highest: 211 228 254;
+  --color-surface-variant:           211 228 254;
+  --color-on-surface:                11 28 48;
+  --color-on-surface-variant:        60 74 66;
+  --color-primary:                   0 108 73;
+  --color-on-primary:                255 255 255;
+  --color-primary-container:         16 185 129;
+  --color-on-primary-container:      0 66 43;
+  --color-primary-fixed:             111 251 190;
+  --color-primary-fixed-dim:         78 222 163;
+  --color-secondary:                 86 94 116;
+  --color-on-secondary:              255 255 255;
+  --color-secondary-container:       218 226 253;
+  --color-on-secondary-container:    92 100 122;
+  --color-outline:                   108 122 113;
+  --color-outline-variant:           187 202 191;
+  --color-error:                     186 26 26;
+  --color-on-error:                  255 255 255;
+  --color-error-container:           255 218 214;
+  --color-on-error-container:        147 0 10;
+  --color-inverse-surface:           33 49 69;
+  --color-inverse-on-surface:        234 241 255;
+  --color-inverse-primary:           78 222 163;
+  --color-surface-tint:              0 108 73;
+  --color-tertiary:                  73 75 214;
+  --color-tertiary-container:        150 153 255;
+  --color-on-tertiary:               255 255 255;
+
+  --glass-bg:     rgba(255, 255, 255, 0.96);
+  --glass-border: rgba(0, 108, 73, 0.13);
 }
 
-#root {
-  width: 100%;
+/* ─── Dark theme ─── */
+.dark {
+  --color-background:                14 21 17;
+  --color-surface:                   14 21 17;
+  --color-surface-dim:               14 21 17;
+  --color-surface-bright:            52 59 54;
+  --color-surface-container-lowest:  9 16 12;
+  --color-surface-container-low:     22 29 25;
+  --color-surface-container:         26 33 29;
+  --color-surface-container-high:    36 44 39;
+  --color-surface-container-highest: 47 54 50;
+  --color-surface-variant:           47 54 50;
+  --color-on-surface:                221 228 221;
+  --color-on-surface-variant:        187 202 191;
+  --color-primary:                   78 222 163;
+  --color-on-primary:                0 56 36;
+  --color-primary-container:         16 185 129;
+  --color-on-primary-container:      0 66 43;
+  --color-primary-fixed:             111 251 190;
+  --color-primary-fixed-dim:         78 222 163;
+  --color-secondary:                 183 200 225;
+  --color-on-secondary:              33 49 69;
+  --color-secondary-container:       58 74 95;
+  --color-on-secondary-container:    169 186 211;
+  --color-outline:                   134 148 138;
+  --color-outline-variant:           60 74 66;
+  --color-error:                     255 180 171;
+  --color-on-error:                  105 0 5;
+  --color-error-container:           147 0 10;
+  --color-on-error-container:        255 218 214;
+  --color-inverse-surface:           221 228 221;
+  --color-inverse-on-surface:        43 50 45;
+  --color-inverse-primary:           0 108 73;
+  --color-surface-tint:              78 222 163;
+  --color-tertiary:                  255 179 175;
+  --color-tertiary-container:        252 124 120;
+  --color-on-tertiary:               101 9 17;
+
+  --glass-bg:     rgba(26, 33, 29, 0.75);
+  --glass-border: transparent;
+}
+
+@layer base {
+  html, body, #root {
+    min-height: 100vh;
+    background-color: rgb(var(--color-background));
+    color: rgb(var(--color-on-surface));
+    font-family: 'Inter', sans-serif;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  * { box-sizing: border-box; }
+
+  .material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  }
+}
+
+@layer components {
+  /* ── Card ───────────────────────────────────────────────────── */
+  .glass-card {
+    backdrop-filter: blur(12px);
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    box-shadow: 0 1px 4px 0 rgba(0, 108, 73, 0.06), 0 0 0 0 transparent;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .glass-card:hover {
+    border-color: rgba(0, 108, 73, 0.3);
+  }
+
+  /* active/open state — persistent green border */
+  .glass-card-active {
+    border-color: rgba(0, 108, 73, 0.4) !important;
+    box-shadow: 0 1px 4px 0 rgba(0, 108, 73, 0.08), 0 0 0 1px rgba(0, 108, 73, 0.08) !important;
+  }
+
+  /* ── Dark mode overrides ───────────────────────────────────── */
+  .dark .glass-card {
+    box-shadow: 0 4px 24px 0 rgba(0, 0, 0, 0.5), 0 1px 6px 0 rgba(0, 0, 0, 0.3);
+  }
+
+  .dark .glass-card:hover {
+    border-color: rgba(78, 222, 163, 0.28);
+    box-shadow: 0 4px 24px 0 rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(78, 222, 163, 0.1);
+  }
+
+  .dark .glass-card-active {
+    border-color: rgba(78, 222, 163, 0.42) !important;
+    box-shadow: 0 4px 24px 0 rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(78, 222, 163, 0.18) !important;
+  }
+
+  .primary-glow:hover {
+    box-shadow: 0 0 20px rgb(var(--color-primary) / 0.35);
+  }
+
+  .input-dark {
+    background: color-mix(in srgb, rgb(var(--color-surface-container-low)) 60%, transparent);
+    border: 1px solid rgba(0, 108, 73, 0.15);
+    color: rgb(var(--color-on-surface));
+    border-radius: 12px;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+
+  .dark .input-dark {
+    border-color: transparent;
+    background: color-mix(in srgb, rgb(var(--color-surface-container-low)) 80%, transparent);
+  }
+
+  .input-dark:focus {
+    outline: none;
+    border-color: rgb(var(--color-primary));
+    box-shadow: 0 0 0 2px color-mix(in srgb, rgb(var(--color-primary)) 15%, transparent);
+  }
+
+  .input-dark::placeholder {
+    color: color-mix(in srgb, rgb(var(--color-outline)) 50%, transparent);
+  }
+
+  /* select option light mode fix */
+  .input-dark option {
+    background-color: rgb(var(--color-surface-container));
+    color: rgb(var(--color-on-surface));
+  }
+
+  .text-gradient {
+    background: linear-gradient(to right, rgb(var(--color-primary)), rgb(var(--color-secondary)));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
 }
