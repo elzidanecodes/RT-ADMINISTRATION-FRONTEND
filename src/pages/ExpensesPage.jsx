@@ -122,25 +122,30 @@ function ExpenseFormModal({ open, onClose, onSaved, initial, categories }) {
     e.preventDefault();
     setLoading(true);
     setErrors({});
-    // Build FormData — backend requires multipart for file upload
-    const fd = new FormData();
-    Object.entries(form).forEach(([k, v]) => {
-      if (v !== null && v !== undefined && v !== '') fd.append(k, v);
-    });
     try {
       initial?.id
-        ? await expenseApi.updateExpense(initial.id, fd)
-        : await expenseApi.createExpense(fd);
+        ? await expenseApi.updateExpense(initial.id, form)
+        : await expenseApi.createExpense(form);
       onSaved();
       onClose();
     } catch (err) {
-      setErrors(err.response?.data?.errors ?? {});
+      const errs = err.response?.data?.errors;
+      if (errs && Object.keys(errs).length > 0) {
+        setErrors(errs);
+      } else {
+        setErrors({ _general: err.response?.data?.message ?? 'Gagal menyimpan pengeluaran.' });
+      }
     } finally { setLoading(false); }
   };
 
   return (
     <Modal open={open} onClose={onClose} title={initial?.id ? 'Edit Pengeluaran' : 'Tambah Pengeluaran'} maxWidth="max-w-xl">
       <form onSubmit={handleSubmit} className="space-y-md">
+        {errors._general && (
+          <div className="rounded-lg bg-error/10 border border-error/20 px-md py-sm text-error text-body-sm">
+            {errors._general}
+          </div>
+        )}
         <Input
           label="Judul Pengeluaran"
           value={form.title}
@@ -210,6 +215,9 @@ function ExpenseFormModal({ open, onClose, onSaved, initial, categories }) {
               className="sr-only"
             />
           </label>
+          {errors.receipt_photo && (
+            <p className="mt-xs text-body-sm text-error">{errors.receipt_photo[0]}</p>
+          )}
           {preview && (
             <img src={preview} alt="preview" className="mt-sm h-28 w-auto rounded-xl border border-outline-variant/20 object-cover" />
           )}
@@ -237,6 +245,90 @@ function ExpenseFormModal({ open, onClose, onSaved, initial, categories }) {
   );
 }
 
+// ─── Expense Detail Modal ──────────────────────────────────────────────────────
+function ExpenseDetailModal({ open, onClose, expense, onEdit, onDelete }) {
+  if (!expense) return null;
+  return (
+    <Modal open={open} onClose={onClose} title="Detail Pengeluaran" maxWidth="max-w-lg">
+      <div className="space-y-md">
+        {/* Header info */}
+        <div className="flex items-start gap-md">
+          <div className="w-12 h-12 rounded-xl bg-error/10 border border-error/20 flex items-center justify-center shrink-0">
+            <span className="material-symbols-outlined text-error text-2xl">trending_down</span>
+          </div>
+          <div className="min-w-0">
+            <p className="font-semibold text-on-surface text-body-main">{expense.title}</p>
+            <p className="text-body-sm text-on-surface-variant mt-0.5">
+              {expense.category?.name ?? '—'}
+              {expense.category?.frequency && (
+                <span className={`ml-xs font-label-caps text-[9px] uppercase px-xs py-0.5 rounded-full ${
+                  expense.category.frequency === 'monthly'
+                    ? 'bg-primary/10 text-primary'
+                    : 'bg-surface-container-high text-on-surface-variant'
+                }`}>
+                  {expense.category.frequency === 'monthly' ? 'Bulanan' : 'Sewaktu'}
+                </span>
+              )}
+            </p>
+          </div>
+          <p className="ml-auto font-mono-data font-bold text-error text-lg whitespace-nowrap">
+            {formatCurrency(expense.amount)}
+          </p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-sm bg-surface-container/50 rounded-xl p-md">
+          <div>
+            <p className="font-label-caps text-[10px] uppercase text-on-surface-variant tracking-wider">Tanggal</p>
+            <p className="text-body-sm text-on-surface mt-0.5">{formatDate(expense.expense_date)}</p>
+          </div>
+          <div>
+            <p className="font-label-caps text-[10px] uppercase text-on-surface-variant tracking-wider">Dicatat oleh</p>
+            <p className="text-body-sm text-on-surface mt-0.5">{expense.created_by?.name ?? '—'}</p>
+          </div>
+          {expense.description && (
+            <div className="col-span-2">
+              <p className="font-label-caps text-[10px] uppercase text-on-surface-variant tracking-wider">Deskripsi</p>
+              <p className="text-body-sm text-on-surface mt-0.5">{expense.description}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Receipt */}
+        {expense.receipt_url ? (
+          <div>
+            <p className="font-label-caps text-[10px] uppercase text-on-surface-variant tracking-wider mb-xs">Bukti Pengeluaran</p>
+            {expense.receipt_url.match(/\.(jpg|jpeg|png|webp)$/i) ? (
+              <img src={expense.receipt_url} alt="Bukti" className="w-full max-h-48 object-cover rounded-xl border border-outline-variant/20" />
+            ) : (
+              <a href={expense.receipt_url} target="_blank" rel="noreferrer"
+                className="flex items-center gap-xs text-primary text-body-sm hover:underline">
+                <span className="material-symbols-outlined text-base">open_in_new</span>
+                Lihat Bukti
+              </a>
+            )}
+          </div>
+        ) : (
+          <div className="flex items-center gap-xs text-on-surface-variant/50 text-body-sm bg-surface-container/30 rounded-xl p-md">
+            <span className="material-symbols-outlined text-base">no_photography</span>
+            Tidak ada bukti pengeluaran
+          </div>
+        )}
+
+        <div className="flex justify-between pt-xs">
+          <Button variant="danger" onClick={() => { onClose(); onDelete(expense.id); }}>
+            <span className="material-symbols-outlined text-lg">delete</span>
+            Hapus
+          </Button>
+          <Button onClick={() => { onClose(); onEdit(expense); }}>
+            <span className="material-symbols-outlined text-lg">edit</span>
+            Edit
+          </Button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
 // ─── Main Page ─────────────────────────────────────────────────────────────────
 export default function ExpensesPage() {
   const [expenses, setExpenses] = useState([]);
@@ -248,6 +340,7 @@ export default function ExpensesPage() {
   const [month, setMonth] = useState(new Date().getMonth() + 1);
   const [categoryFilter, setCategoryFilter] = useState('');
   const [formModal, setFormModal] = useState({ open: false, initial: null });
+  const [detailModal, setDetailModal] = useState({ open: false, expense: null });
   const [catModal, setCatModal] = useState(false);
 
   const fetchExpenses = () => {
@@ -415,7 +508,8 @@ export default function ExpensesPage() {
                 </td>
               </tr>
             ) : expenses.map((exp) => (
-              <tr key={exp.id} className="hover:bg-primary/5 transition-colors group">
+              <tr key={exp.id} className="hover:bg-primary/5 transition-colors cursor-pointer group"
+                onClick={() => setDetailModal({ open: true, expense: exp })}>
                 <td className="px-lg py-md">
                   <div>
                     <p className="font-medium text-on-surface">{exp.title}</p>
@@ -467,17 +561,17 @@ export default function ExpensesPage() {
                     <span className="text-on-surface-variant/40 text-[12px]">—</span>
                   )}
                 </td>
-                <td className="px-lg py-md text-right" onClick={(e2) => e2.stopPropagation()}>
+                <td className="px-lg py-md text-right">
                   <div className="flex items-center justify-end gap-sm opacity-0 group-hover:opacity-100 transition-opacity">
                     <button
-                      onClick={() => setFormModal({ open: true, initial: exp })}
+                      onClick={(e) => { e.stopPropagation(); setFormModal({ open: true, initial: exp }); }}
                       className="p-1 rounded-lg hover:bg-primary/10 text-on-surface-variant hover:text-primary transition-colors"
                       title="Edit"
                     >
                       <span className="material-symbols-outlined text-lg">edit</span>
                     </button>
                     <button
-                      onClick={() => handleDelete(exp.id)}
+                      onClick={(e) => { e.stopPropagation(); handleDelete(exp.id); }}
                       className="p-1 rounded-lg hover:bg-error/10 text-on-surface-variant hover:text-error transition-colors"
                       title="Hapus"
                     >
@@ -540,6 +634,13 @@ export default function ExpensesPage() {
       </div>
 
       {/* Modals */}
+      <ExpenseDetailModal
+        open={detailModal.open}
+        expense={detailModal.expense}
+        onClose={() => setDetailModal({ open: false, expense: null })}
+        onEdit={(exp) => setFormModal({ open: true, initial: exp })}
+        onDelete={handleDelete}
+      />
       <ExpenseFormModal
         open={formModal.open}
         initial={formModal.initial}
