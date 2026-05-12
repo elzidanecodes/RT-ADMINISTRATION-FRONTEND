@@ -73,13 +73,13 @@ rt-administration-frontend/
 > Light Mode
 
 <p align="center">
-  <img src="docs/screenshot-light.png" alt="Light Mode" width="700"/>
+  <img src="src/docs/screenshot-light.png" alt="Light Mode" width="700"/>
 </p>
 
 > Dark Mode
 
 <p align="center">
-  <img src="docs/screenshot-dark.png" alt="Dark Mode" width="700"/>
+  <img src="src/docs/screenshot-dark.png" alt="Dark Mode" width="700"/>
 </p>
 
 ---
